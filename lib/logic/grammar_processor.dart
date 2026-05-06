@@ -1,4 +1,3 @@
-
 import 'grammar_result.dart';
 
 class GrammarProcessor {
@@ -10,10 +9,6 @@ class GrammarProcessor {
   Map<String, Set<String>> _firstSets = {};
   Map<String, Set<String>> _followSets = {};
 
-  // ════════════════════════════════════════════════
-  // PUBLIC ENTRY POINT
-  // Call this from UI with raw grammar string.
-  // ════════════════════════════════════════════════
   GrammarResult processAll(String rawInput) {
     _reset();
 
@@ -49,16 +44,16 @@ class GrammarProcessor {
   }
 
   GrammarResult _errorResult(String msg) => GrammarResult(
-        grammar: {},
-        nonTerminals: [],
-        terminals: [],
-        startSymbol: '',
-        leftRecursionMap: {},
-        hasLeftRecursion: false,
-        firstSets: {},
-        followSets: {},
-        errorMessage: msg,
-      );
+    grammar: {},
+    nonTerminals: [],
+    terminals: [],
+    startSymbol: '',
+    leftRecursionMap: {},
+    hasLeftRecursion: false,
+    firstSets: {},
+    followSets: {},
+    errorMessage: msg,
+  );
 
   // ════════════════════════════════════════════════
   // STEP 1 — PARSE GRAMMAR
@@ -279,7 +274,8 @@ class GrammarProcessor {
       // Multi-char terminal: starts with lowercase
       if (RegExp(r'[a-z]').hasMatch(ch)) {
         String token = '';
-        while (i < production.length && RegExp(r'[a-z]').hasMatch(production[i])) {
+        while (i < production.length &&
+            RegExp(r'[a-z]').hasMatch(production[i])) {
           token += production[i];
           i++;
         }
@@ -311,7 +307,8 @@ class GrammarProcessor {
   // Checks 'e' is standalone (not part of 'else', 'end', etc.)
   bool _isStandaloneEpsilon(String production, int i) {
     final before = i == 0 || !RegExp(r'[a-zA-Z]').hasMatch(production[i - 1]);
-    final after = i + 1 >= production.length ||
+    final after =
+        i + 1 >= production.length ||
         !RegExp(r'[a-zA-Z]').hasMatch(production[i + 1]);
     return before && after;
   }

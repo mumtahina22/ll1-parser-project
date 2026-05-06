@@ -1,3 +1,5 @@
+import 'package:ll1_parser/logic/grammar_processor.dart';
+
 import 'parse_step.dart';
 
 ParseResult simulate(
@@ -81,8 +83,11 @@ ParseResult simulate(
 
       stack.removeLast();
 
-      if (production != "ε") {
-        List<String> rhs = production.split(" ");
+      if (production != "ε" && production != "e") {
+        // Use Member 1's smart tokenizer!
+        final processor = GrammarProcessor();
+        List<String> rhs = processor.tokenizePublic(production);
+
         for (String symbol in rhs.reversed) {
           stack.add(symbol);
         }

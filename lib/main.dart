@@ -14,20 +14,21 @@ class ParserVisualizerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Parser Visualizer',
       theme: ThemeData(
-        useMaterial3: true, // Enables Flutter's modern design system
+        useMaterial3: true,
         brightness: Brightness.dark,
-        // Deep Midnight Blue background
-        scaffoldBackgroundColor: const Color(0xFF0F172A), 
-        primaryColor: const Color(0xFF3B82F6), 
+        scaffoldBackgroundColor: const Color(0xFF0B0F19), // Deeper Midnight Black/Blue
+        primaryColor: const Color(0xFF3B82F6), // Vibrant Blue
         colorScheme: const ColorScheme.dark(
-          // Sleek modern blue for primary actions
-          primary: Color(0xFF3B82F6), 
-          // Emerald/Teal for secondary accents (looks great against midnight blue)
-          secondary: Color(0xFF2DD4BF), 
-          // Slightly lighter midnight blue for elevated surfaces (text boxes, tables)
-          surface: Color(0xFF1E293B), 
+          primary: Color(0xFF3B82F6),
+          secondary: Color(0xFF00E5FF), // Cyber Neon Cyan
+          surface: Color(0xFF161E2E), // Elevated Dark Blue Surface
         ),
-        // Removed the monospace font so it uses the clean default sans-serif
+        fontFamily: 'Inter', // Try to default to a modern font if available in system
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+        ),
       ),
       home: const ParserScreen(),
     );
