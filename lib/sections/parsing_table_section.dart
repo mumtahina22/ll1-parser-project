@@ -1,6 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../logic/grammar_result.dart';
-import '../../logic/parsing_table_generator.dart'; // Import Member 2's file
+import '../../logic/parsing_table_generator.dart';
 
 class ParsingTableSection extends StatelessWidget {
   final GrammarResult result;
@@ -14,18 +15,17 @@ class ParsingTableSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Run Member 2's logic
     final generator = ParsingTableGenerator();
     final table = generator.generate(result);
 
-    // 2. Build Columns dynamically based on terminals
     final List<DataColumn> columns = [
       DataColumn(
         label: Text(
           'NT',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.secondary, // Teal accent
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
       ),
@@ -36,22 +36,30 @@ class ParsingTableSection extends StatelessWidget {
         DataColumn(
           label: Text(
             t,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white),
           ),
         ),
       );
     }
 
-    // 3. Build Rows dynamically based on non-terminals
     final List<DataRow> rows = [];
-    for (final nt in result.nonTerminals) {
+    for (int i = 0; i < result.nonTerminals.length; i++) {
+      final nt = result.nonTerminals[i];
       final List<DataCell> cells = [
         DataCell(
-          Text(
-            nt,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.secondary,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              nt,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
             ),
           ),
         ),
@@ -60,60 +68,95 @@ class ParsingTableSection extends StatelessWidget {
       for (final t in result.terminals) {
         final production = table[nt]?[t];
         if (production != null && production.isNotEmpty) {
-          cells.add(DataCell(Text('$nt → $production')));
+          cells.add(DataCell(
+            Text(
+              '$nt → $production',
+              style: const TextStyle(fontWeight: FontWeight.w500, letterSpacing: 1.1),
+            )
+          ));
         } else {
-          cells.add(const DataCell(Text(''))); // Empty cell
+          cells.add(const DataCell(Text('')));
         }
       }
 
-      rows.add(DataRow(cells: cells));
+      rows.add(DataRow(
+        color: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
+          return i % 2 == 0 ? Colors.white.withOpacity(0.02) : Colors.transparent;
+        }),
+        cells: cells,
+      ));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Wrap the table in a container to give it a clean, modern card look
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface, // Lighter midnight blue
-            border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+        _buildGlassCard(
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              dividerColor: Colors.white.withOpacity(0.05),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowColor: WidgetStateProperty.all(Colors.white.withOpacity(0.05)),
+                columnSpacing: 40,
+                horizontalMargin: 24,
+                headingRowHeight: 56,
+                dataRowMinHeight: 56,
+                dataRowMaxHeight: 56,
+                border: TableBorder(
+                  horizontalInside: BorderSide(color: Colors.white.withOpacity(0.05)),
+                  verticalInside: BorderSide(color: Colors.white.withOpacity(0.05)),
+                ),
+                columns: columns,
+                rows: rows,
               ),
-            ],
-          ),
-          // Scroll horizontally if the grammar has many terminals
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(Colors.white.withOpacity(0.05)),
-              border: TableBorder(
-                horizontalInside: BorderSide(color: Colors.white.withOpacity(0.05)),
-                verticalInside: BorderSide(color: Colors.white.withOpacity(0.05)),
-              ),
-              columns: columns,
-              rows: rows,
             ),
           ),
         ),
         const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: onSimulate,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Theme.of(context).primaryColor, const Color(0xFF2563EB)],
             ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4)),
+            ],
           ),
-          child: const Text('Proceed to Simulation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          child: ElevatedButton(
+            onPressed: onSimulate,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('PROCEED TO SIMULATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.2, color: Colors.white)),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGlassCard({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }

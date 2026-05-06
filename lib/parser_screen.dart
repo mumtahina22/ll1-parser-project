@@ -25,16 +25,15 @@ class _ParserScreenState extends State<ParserScreen> {
   bool _showTable = false;
   bool _showSim = false;
 
-  // State variable to hold the processed grammar data
   GrammarResult? _grammarResult;
 
   void _scrollTo(GlobalKey key) {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (key.currentContext != null) {
         Scrollable.ensureVisible(
           key.currentContext!,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOutExpo,
         );
       }
     });
@@ -43,92 +42,225 @@ class _ParserScreenState extends State<ParserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Center(child: Text('Parser Visualizer')),
-        backgroundColor: const Color(0xFF1E293B), // Matches the Midnight Blue surface theme
+        title: Text(
+          'Parser Visualizer',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            shadows: [
+              Shadow(
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // STEP 1: GRAMMAR INPUT
-            _buildSectionHeader(key: _grammarKey, title: '1. Input Grammar'),
-            GrammarInputSection(
-              onCheckComplete: (result) {
-                setState(() {
-                  _grammarResult = result;
-                  _showRecursion = true;
-                });
-                _scrollTo(_recursionKey);
-              },
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFF0B0F19).withOpacity(0.9),
+                Colors.transparent,
+              ],
             ),
-
-            // STEP 2: RECURSION CHECK
-            if (_showRecursion) ...[
-              const Divider(height: 60, color: Colors.white24),
-              _buildSectionHeader(key: _recursionKey, title: '2. Left Recursion Check'),
-              RecursionCheckSection(
-                onCheckComplete: () {
-                  setState(() => _showFirstFollow = true);
-                  _scrollTo(_firstFollowKey);
-                },
-              ),
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(-0.8, -0.6),
+            radius: 2.0,
+            colors: [
+              Color(0xFF162544), // Subtle blue glow at top left
+              Color(0xFF0B0F19), // Deep background
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // STEP 1: GRAMMAR INPUT
+                _buildSectionHeader(
+                  key: _grammarKey,
+                  title: 'Input Grammar',
+                  icon: Icons.input_rounded,
+                ),
+                GrammarInputSection(
+                  onCheckComplete: (result) {
+                    setState(() {
+                      _grammarResult = result;
+                      _showRecursion = true;
+                    });
+                    _scrollTo(_recursionKey);
+                  },
+                ),
 
-            // STEP 3: FIRST & FOLLOW
-            if (_showFirstFollow && _grammarResult != null) ...[
-              const Divider(height: 60, color: Colors.white24),
-              _buildSectionHeader(key: _firstFollowKey, title: '3. FIRST & FOLLOW Sets'),
-              FirstFollowSection(
-                result: _grammarResult!,
-                onGenerateTable: () {
-                  setState(() => _showTable = true);
-                  _scrollTo(_tableKey);
-                },
-              ),
-            ],
+                // STEP 2: RECURSION CHECK
+                _buildAnimatedSection(
+                  show: _showRecursion,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 30),
+                        child: Divider(color: Colors.white12),
+                      ),
+                      _buildSectionHeader(
+                        key: _recursionKey,
+                        title: 'Left Recursion Check',
+                        icon: Icons.loop_rounded,
+                      ),
+                      RecursionCheckSection(
+                        onCheckComplete: () {
+                          setState(() => _showFirstFollow = true);
+                          _scrollTo(_firstFollowKey);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
 
-            // STEP 4: PARSING TABLE
-            if (_showTable && _grammarResult != null) ...[
-              const Divider(height: 60, color: Colors.white24),
-              _buildSectionHeader(key: _tableKey, title: '4. LL(1) Parsing Table'),
-              ParsingTableSection(
-                result: _grammarResult!,
-                onSimulate: () {
-                  setState(() => _showSim = true);
-                  _scrollTo(_simKey);
-                },
-              ),
-            ],
+                // STEP 3: FIRST & FOLLOW
+                _buildAnimatedSection(
+                  show: _showFirstFollow && _grammarResult != null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 30),
+                        child: Divider(color: Colors.white12),
+                      ),
+                      _buildSectionHeader(
+                        key: _firstFollowKey,
+                        title: 'FIRST & FOLLOW Sets',
+                        icon: Icons.data_object_rounded,
+                      ),
+                      if (_grammarResult != null)
+                        FirstFollowSection(
+                          result: _grammarResult!,
+                          onGenerateTable: () {
+                            setState(() => _showTable = true);
+                            _scrollTo(_tableKey);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
 
-            // STEP 5: SIMULATION
-            if (_showSim && _grammarResult != null) ...[
-              const Divider(height: 60, color: Colors.white24),
-              _buildSectionHeader(key: _simKey, title: '5. Step-by-Step Simulation'),
-              // FIXED: Removed 'const' and passed the required result parameter
-              SimulationSection(result: _grammarResult!), 
-            ],
+                // STEP 4: PARSING TABLE
+                _buildAnimatedSection(
+                  show: _showTable && _grammarResult != null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 30),
+                        child: Divider(color: Colors.white12),
+                      ),
+                      _buildSectionHeader(
+                        key: _tableKey,
+                        title: 'LL(1) Parsing Table',
+                        icon: Icons.table_chart_rounded,
+                      ),
+                      if (_grammarResult != null)
+                        ParsingTableSection(
+                          result: _grammarResult!,
+                          onSimulate: () {
+                            setState(() => _showSim = true);
+                            _scrollTo(_simKey);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
 
-            const SizedBox(height: 400),
-          ],
+                // STEP 5: SIMULATION
+                _buildAnimatedSection(
+                  show: _showSim && _grammarResult != null,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 30),
+                        child: Divider(color: Colors.white12),
+                      ),
+                      _buildSectionHeader(
+                        key: _simKey,
+                        title: 'Step-by-Step Simulation',
+                        icon: Icons.play_circle_fill_rounded,
+                      ),
+                      if (_grammarResult != null)
+                        SimulationSection(result: _grammarResult!),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 300),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader({required GlobalKey key, required String title}) {
+  Widget _buildAnimatedSection({required bool show, required Widget child}) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutExpo,
+      child: AnimatedOpacity(
+        opacity: show ? 1.0 : 0.0,
+        duration: const Duration(milliseconds: 600),
+        child: show ? child : const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required GlobalKey key,
+    required String title,
+    required IconData icon,
+  }) {
     return Container(
       key: key,
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Theme.of(context).colorScheme.secondary,
+            size: 28,
+            shadows: [
+              Shadow(
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+              color: Colors.white.withOpacity(0.95),
+            ),
+          ),
+        ],
       ),
     );
   }
